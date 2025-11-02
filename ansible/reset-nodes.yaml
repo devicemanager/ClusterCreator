@@ -10,6 +10,11 @@
         cmd: kubeadm reset -f
       ignore_errors: yes
 
+    - name: Delete /etc/kubernetes directory
+      ansible.builtin.file:
+        path: /etc/kubernetes
+        state: absent
+
     - name: Flush iptables rules
       ansible.builtin.iptables:
         flush: yes

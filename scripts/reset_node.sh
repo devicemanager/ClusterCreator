@@ -46,8 +46,8 @@ echo -e "${GREEN}Resetting Kubernetes on ${TARGETED_NODE} from cluster: $CLUSTER
 # --------------------------- Script Start ---------------------------
 
 playbooks=(
-  "trust-hosts.yaml"
   "reset-nodes.yaml"
+  "trust-hosts.yaml"
 )
 run_playbooks "--limit=${TARGETED_NODE}" "${playbooks[@]}"
 

@@ -88,7 +88,18 @@ cleanup_files() {
 export -f cleanup_files
 
 run_playbooks() {
-  local ansible_opts="-i tmp/${CLUSTER_NAME}/ansible-hosts.txt -u ${VM_USERNAME} --private-key ${HOME}/.ssh/${NON_PASSWORD_PROTECTED_SSH_KEY}"
+  # Prompt for sudo password and store it in a temporary file
+  local become_pass_file
+  become_pass_file=$(mktemp)
+  # Ensure the temp file is removed on exit
+  trap 'rm -f "$become_pass_file"' EXIT
+
+  read -s -p "Enter sudo password for localhost: " sudo_password
+  echo "$sudo_password" > "$become_pass_file"
+  # Add a newline after the password prompt
+  echo
+
+  local ansible_opts="-i tmp/${CLUSTER_NAME}/ansible-hosts.txt -u ${VM_USERNAME} --private-key ${HOME}/.ssh/${NON_PASSWORD_PROTECTED_SSH_KEY} --become-pass-file $become_pass_file"
 
   # Default extra vars
   local default_extra_vars="\

@@ -9,6 +9,11 @@
         path: /root/.bootstrap
       register: bootstrap_marker_check
 
+    - name: Check if kubeconfig exists
+      ansible.builtin.stat:
+        path: /etc/kubernetes/admin.conf
+      register: kube_config_exists
+
     - name: Display warning and ask for confirmation
       ansible.builtin.pause:
         prompt: "This k8s cluster may have already been bootstrapped. Press Enter to continue anyway or Ctrl+C to abort."
@@ -28,17 +33,6 @@
       tags:
         - kubeadm_config
 
-    - name: Check if kubeadm init has already been run
-      ansible.builtin.stat:
-        path: /etc/kubernetes/admin.conf
-      register: kube_config_exists
-      become: true
-
-    - name: Fail if kubeadm init has already been run
-      fail:
-        msg: "Cluster has already been bootstrapped"
-      when: kube_config_exists.stat.exists
-
     # update and upgrade controlplane-0 node and reboot if necessary - but only if kubeadm init has not been run
     - name: Upgrade all packages to the latest version on controlplane-0
       become: true
@@ -51,14 +45,12 @@
       register: upgrade_result
       until: upgrade_result is succeeded
       retries: 30
-      delay: 10
-      when: not kube_config_exists.stat.exists
+
     - name: Check if reboot is required on controlplane-0
       become: true
       ansible.builtin.stat:
         path: /var/run/reboot-required
-      register: reboot_required
-      when: not kube_config_exists.stat.exists
+
     - name: Reboot controlplane-0 (if necessary)
       become: true
       ansible.builtin.reboot:
@@ -67,8 +59,7 @@
         reboot_timeout: 600
         pre_reboot_delay: 0
         post_reboot_delay: 30
-        test_command: uptime
-      when: not kube_config_exists.stat.exists and reboot_required.stat.exists
+
     - name: Wait for system to become reachable again
       ansible.builtin.wait_for_connection:
         delay: 5
@@ -91,7 +82,7 @@
       ansible.builtin.shell:
         cmd: >
           kubeadm init
-          --config /home/{{ cluster_config.ssh.ssh_user }}/kubeadm-config.yaml
+          --config /{{ cluster_config.ssh.ssh_user }}/kubeadm-config.yaml
           --upload-certs
           --skip-phases=addon/kube-proxy
       become: true
@@ -132,7 +123,7 @@
       when: not kube_config_exists.stat.exists
     - name: Remove kubeadm-config.yaml
       ansible.builtin.file:
-        path: "/home/{{ cluster_config.ssh.ssh_user }}/kubeadm-config.yaml"
+        path: "/{{ cluster_config.ssh.ssh_user }}/kubeadm-config.yaml"
         state: absent
       become: true
       when: not kube_config_exists.stat.exists

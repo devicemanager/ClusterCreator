@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 usage() {
   echo "Usage: ccr bootstrap"
@@ -43,6 +44,12 @@ if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
   echo "Operation canceled."
   exit 1
 fi
+
+mkdir -p "tmp/${CLUSTER_NAME}"
+mkdir -p "tmp/${CLUSTER_NAME}"
+pushd "$REPO_PATH/terraform" > /dev/null
+tofu output -json cluster_config > "$REPO_PATH/ansible/tmp/${CLUSTER_NAME}/cluster_config.json"
+popd > /dev/null
 
 playbooks=(
   "generate-hosts-txt.yaml"

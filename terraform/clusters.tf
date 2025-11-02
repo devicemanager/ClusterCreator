@@ -22,8 +22,8 @@ variable "clusters" {
       vlan_id                : optional(number, null)                                     # Optional. The vlan id to assign to the network interfaces of the VMs. Defaults to <cluster_id>00 (e.e. 100, 200, 300, etc.)
       vlan_name              : optional(string, null)                                     # Optional. The name of the VLAN in Unifi. Defaults to the cluster name in all caps.
       ipv4                   : object({
-        subnet_prefix        : optional(string, "10.0.0")                                 # Optional. First three octets of the host IPv4 network's subnet (assuming its a /24)
-        gateway              : optional(string, "10.0.0.1")                               # Optional. Gateway for vm hosts
+        subnet_prefix        : optional(string, "192.168.20")                                 # Optional. First three octets of the host IPv4 network's subnet (assuming its a /24)
+        gateway              : optional(string, "192.168.20.1")                               # Optional. Gateway for vm hosts
         pod_cidr             : optional(string, "10.42.0.0/16")                           # Optional. Cidr range for pod networking internal to cluster. Shouldn't overlap with ipv4 lan network. These must differ cluster to cluster if using clustermesh.
         svc_cidr             : optional(string, "10.43.0.0/16")                           # Optional. Cidr range for service networking internal to cluster. Shouldn't overlap with ipv4 lan network.
         dns1                 : optional(string, "1.1.1.1")                                # Optional. Primary dns server for vm hosts
@@ -53,7 +53,7 @@ variable "clusters" {
     })
     node_classes             : map(object({
       count                  : number                                                     # Required. Number of VMs to create for this node class.
-      pve_nodes              : optional(list(string),["Citadel","Acropolis","Parthenon"]) # Optional. Nodes that this class is allowed to run on. They will be cycled through and will repeat if count > length(pve_nodes).
+      pve_nodes              : optional(list(string),["pve-5","pve-5","pve-5"]) # Optional. Nodes that this class is allowed to run on. They will be cycled through and will repeat if count > length(pve_nodes).
       machine                : optional(string, "q35")                                    # Optional. Default to "q35". Use i400fx for partial gpu pass-through.
       cpu_type               : optional(string, "x86-64-v3")                              # Optional. Default to x86-64-v3. 'host' gives the best performance and is needed for full gpu pass-through, but it can't live migrate. https://www.yinfor.com/2023/06/how-i-choose-vm-cpu-type-in-proxmox-ve.html
       cores                  : optional(number, 2)                                        # Optional. Number of cores to use.
@@ -82,35 +82,36 @@ variable "clusters" {
       cluster_name             = "alpha"
       cluster_id               = 1
       kubeconfig_file_name     = "alpha.yml"
-      start_on_proxmox_boot    = false
+      start_on_proxmox_boot    = true
       ssh = {
-        ssh_user               = "line6"
+        ssh_user               = "root"
       }
       networking = {
         ipv4 = {
-          subnet_prefix        = "10.0.1"
-          gateway              = "10.0.1.1"
+          subnet_prefix        = "192.168.20"
+          gateway              = "192.168.20.1"
           management_cidrs     = "10.0.0.0/30,10.0.60.2,10.0.50.5,10.0.50.6"
           lb_cidrs             = "10.0.1.200/29,10.0.1.208/28,10.0.1.224/28,10.0.1.240/29,10.0.1.248/30,10.0.1.252/31"
         }
         ipv6 = {}
         kube_vip = {
-          vip                  = "10.0.1.100"
+          vip                  = "192.168.20.51"
           vip_hostname         = "alpha-api-server"
         }
       }
       node_classes = {
         controlplane = {
           count      = 1
-          cores      = 16
-          memory     = 16384
+          cores      = 4
+          memory     = 4096
           disks      = [
-            { datastore = "local-btrfs", size = 100 }
+            { datastore = "local-zfs", size = 100 }
           ]
-          start_ip   = 110
+          start_ip   = 60
           labels = [
             "nodeclass=controlplane"
           ]
+          pve_nodes = ["pve-5"]
         }
       }
     }
@@ -120,7 +121,7 @@ variable "clusters" {
       kubeconfig_file_name     = "beta.yml"
       start_on_proxmox_boot    = false
       ssh = {
-        ssh_user               = "line6"
+        ssh_user               = "root"
       }
       networking = {
         ipv4 = {
@@ -168,7 +169,7 @@ variable "clusters" {
       kubeconfig_file_name     = "gamma.yml"
       start_on_proxmox_boot    = false
       ssh = {
-        ssh_user               = "line6"
+        ssh_user               = "root"
       }
       networking = {
         ipv4 = {
