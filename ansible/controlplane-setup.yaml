@@ -51,6 +51,7 @@
       ansible.builtin.stat:
         path: /var/run/reboot-required
 
+      register: reboot_required
     - name: Reboot controlplane-0 (if necessary)
       become: true
       ansible.builtin.reboot:
@@ -59,6 +60,7 @@
         reboot_timeout: 600
         pre_reboot_delay: 0
         post_reboot_delay: 30
+      when: reboot_required.stat.exists
 
     - name: Wait for system to become reachable again
       ansible.builtin.wait_for_connection:
@@ -84,7 +86,7 @@
           kubeadm init
           --config /{{ cluster_config.ssh.ssh_user }}/kubeadm-config.yaml
           --upload-certs
-          --skip-phases=addon/kube-proxy
+          --ignore-preflight-errors=NumCPU --skip-phases=addon/kube-proxy
       become: true
       register: kubeadm_init
       failed_when: kubeadm_init.rc != 0

@@ -7,7 +7,7 @@ variable "clusters" {
     kubeconfig_file_name     : string                                                     # Required. Name of the local kubeconfig file to be created. Assumed this will be in $HOME/.kube/
     start_on_proxmox_boot    : optional(bool, true)                                       # Optional. Whether or not to start the cluster's vms on proxmox boot
     max_pods_per_node        : optional(number, 512)                                      # Optional. Max pods per node. This should be a function of the quantity of IPs in you pod_cidr and number of nodes.
-    reboot_after_update      : optional(bool, false)                                      # Optional. Whether or not to reboot the nodes during terraform apply.
+    reboot_after_update      : optional(bool, true)                                      # Optional. Whether or not to reboot the nodes during terraform apply.
     use_pve_ha               : optional(bool, false)                                      # Optional. Whether to setup PVE High Availability for the VMs.
     ssh                      : object({
       ssh_user               : string                                                     # Required. username for the remote server
@@ -55,8 +55,8 @@ variable "clusters" {
       count                  : number                                                     # Required. Number of VMs to create for this node class.
       pve_nodes              : optional(list(string),["pve-5","pve-5","pve-5"]) # Optional. Nodes that this class is allowed to run on. They will be cycled through and will repeat if count > length(pve_nodes).
       machine                : optional(string, "q35")                                    # Optional. Default to "q35". Use i400fx for partial gpu pass-through.
-      cpu_type               : optional(string, "x86-64-v3")                              # Optional. Default to x86-64-v3. 'host' gives the best performance and is needed for full gpu pass-through, but it can't live migrate. https://www.yinfor.com/2023/06/how-i-choose-vm-cpu-type-in-proxmox-ve.html
-      cores                  : optional(number, 2)                                        # Optional. Number of cores to use.
+      cpu_type               : optional(string, "host")                              # Optional. Default to x86-64-v3. 'host' gives the best performance and is needed for full gpu pass-through, but it can't live migrate. https://www.yinfor.com/2023/06/how-i-choose-vm-cpu-type-in-proxmox-ve.html
+      cores                  : optional(number, 1)                                        # Optional. Number of cores to use.
       sockets                : optional(number, 1)                                        # Optional. Number of sockets to use or emulate.
       memory                 : optional(number, 2048)                                     # Optional. Non-ballooning memory in MB.
       disks                  : list(object({                                              # Required. First disk will be used for OS. Others can be added for longhorn, ceph, etc.
@@ -124,40 +124,40 @@ variable "clusters" {
         ssh_user               = "root"
       }
       networking = {
-        bridge                 = "betanet"
+        bridge                 = "vmbr0"
         ipv4 = {
-          subnet_prefix        = "10.0.2"
-          gateway              = "10.0.2.1"
+          subnet_prefix        = "192.168.20"
+          gateway              = "192.168.20.1"
           management_cidrs     = "10.0.0.0/30,10.0.60.2,10.0.50.5,10.0.50.6"
-          lb_cidrs             = "10.0.2.200/29,10.0.2.208/28,10.0.2.224/28,10.0.2.240/29,10.0.2.248/30,10.0.2.252/31"
+          lb_cidrs             = "192.168.20.200/29,192.168.20.208/28,192.168.20.224/28,192.168.20.240/29,192.168.20.248/30,192.168.20.252/31"
         }
         ipv6 = {}
         kube_vip = {
-          vip                  = "10.0.2.100"
+          vip                  = "192.168.20.52"
           vip_hostname         = "beta-api-server"
         }
       }
       node_classes = {
         controlplane = {
           count      = 1
-          cores      = 4
-          memory     = 4096
+          cores      = 2
+          memory     = 2048
           disks      = [
             { datastore = "local-zfs", size = 20 }
           ]
-          start_ip   = 110
+          start_ip   = 120
           labels = [
             "nodeclass=controlplane"
           ]
         }
         general = {
-          count      = 2
-          cores      = 8
-          memory     = 4096
+          count      = 1
+          cores      = 1
+          memory     = 2048
           disks      = [
             { datastore = "local-zfs", size = 20 }
           ]
-          start_ip   = 130
+          start_ip   = 140
           labels = [
             "nodeclass=general"
           ]
