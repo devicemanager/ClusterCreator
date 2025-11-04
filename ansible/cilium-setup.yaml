@@ -12,7 +12,7 @@
 
     - name: Determine non-API/ETCD server count
       set_fact:
-        replica_count: "{{ 1 if non_api_etcd_server_count <= \"1\" else 2 }}"
+        replica_count: "{{ 1 if non_api_etcd_server_count <= 1 else 2 }}"
 
     - name: Generate cilium.yaml configuration file
       become: yes

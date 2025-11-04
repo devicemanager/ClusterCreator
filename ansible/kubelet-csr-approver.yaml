@@ -12,7 +12,7 @@
 
     - name: Determine if needing HA based on non-API/ETCD server count
       set_fact:
-        kubelet_csr_approver_replica_count: "{{ 1 if non_api_etcd_server_count <= \"1\" else 2 }}"
+        kubelet_csr_approver_replica_count: "{{ 1 if non_api_etcd_server_count <= 1 else 2 }}"
 
     - name: Download the kubelet-serving-cert-approver manifest
       ansible.builtin.get_url:

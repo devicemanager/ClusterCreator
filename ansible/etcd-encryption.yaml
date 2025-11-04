@@ -13,38 +13,49 @@
         path: "{{ enc_key_path }}"
       register: enc_key_stat
 
-    - name: Find the first node with the encryption key
-      set_fact:
-        key_source_node: "{{ item }}"
-      when: hostvars[item].enc_key_stat.stat.exists | default(false)
-      loop: "{{ groups['controlplane'] }}"
-      loop_control:
-        label: "{{ item }}"
+    - name: Determine and consolidate encryption key
       run_once: true
+      block:
+        - name: Attempt to slurp the encryption key from all controlplane nodes
+          ansible.builtin.slurp:
+            src: "{{ enc_key_path }}"
+          register: slurped_keys
+          ignore_errors: true
+          delegate_to: "{{ item }}"
+          loop: "{{ groups['controlplane'] }}"
 
-    - name: Load the existing encryption key from the source node
-      ansible.builtin.slurp:
-        src: "{{ enc_key_path }}"
-      register: slurped_key
-      when: key_source_node is defined
-      delegate_to: "{{ key_source_node }}"
-      run_once: true
+        - name: Find the first valid slurped key content
+          set_fact:
+            encryption_key_b64: "{{ (slurped_keys.results | selectattr('content', 'defined') | map(attribute='content') | list | first) | default('') }}"
 
-    - name: Set encryption key fact from existing key
+        - name: Set key from existing b64 content
+          set_fact:
+            final_encryption_key: "{{ encryption_key_b64 | b64decode }}"
+          when: encryption_key_b64 != ""
+
+        - name: Generate a new key if none was found
+          block:
+            - name: Generate a random base64 secret key
+              ansible.builtin.shell: "head -c 32 /dev/urandom | base64"
+              register: random_key
+              delegate_to: localhost
+
+            - name: Set key from new key
+              set_fact:
+                final_encryption_key: "{{ random_key.stdout }}"
+          when: encryption_key_b64 == ""
+
+        - name: Save the definitive encryption key to a local temp file
+          delegate_to: localhost
+          become: false
+          ansible.builtin.copy:
+            content: "{{ final_encryption_key }}"
+            dest: "tmp/{{ cluster_name }}/enc.key"
+            mode: '0600'
+
+    - name: Load encryption key from local temp file into fact for all hosts
       set_fact:
-        encryption_key: "{{ slurped_key.content | b64decode }}"
-      when: slurped_key is defined and slurped_key.content is defined
-
-    - name: Generate a random base64 secret key (only if no nodes have the key)
-      ansible.builtin.shell: "head -c 32 /dev/urandom | base64"
-      register: random_key
-      when: encryption_key is not defined
-      run_once: true
-
-    - name: Save the new encryption key to a fact
-      set_fact:
-        encryption_key: "{{ random_key.stdout }}"
-      when: encryption_key is not defined and random_key is defined
+        encryption_key: "{{ lookup('file', 'tmp/{{ cluster_name }}/enc.key') }}"
 
     - name: Ensure /etc/kubernetes/enc directory exists
       ansible.builtin.file:

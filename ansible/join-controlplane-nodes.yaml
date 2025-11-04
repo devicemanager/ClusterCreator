@@ -6,10 +6,10 @@
   vars:
     cluster_config: "{{ lookup('file', 'tmp/{{ cluster_name }}/cluster_config.json') | from_json }}"
   tasks:
-        - name: Set controlplane host to the first in the inventory
-          set_fact:
-            control_plane_host: "{{ groups['controlplane'][0] }}"
-          run_once: true
+    - name: Set controlplane host to the first in the inventory
+      set_fact:
+        control_plane_host: "{{ groups['controlplane'][0] }}"
+      run_once: true
 
     - name: Show selected controlplane host
       debug:
@@ -41,7 +41,7 @@
         msg: "Host {{ inventory_hostname }} is already in the cluster"
       when: is_in_cluster
 
-    - name: Check host status if not in cluster
+    - name: Check host status if not in a cluster
       ansible.builtin.debug:
         msg: "Host {{ inventory_hostname }} is not in the cluster and will join"
       when: not is_in_cluster

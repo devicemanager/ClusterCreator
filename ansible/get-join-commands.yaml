@@ -32,12 +32,12 @@
         - name: Deploy kubeadm config file
           ansible.builtin.template:
             src: helpers/kubeadm_cp_config.yaml.j2
-            dest: "~/kubeadm-config.yaml"
+            dest: "/root/kubeadm-config.yaml"
           delegate_to: "{{ control_plane_host }}"
 
         - name: Re-upload certificates and generate a new certificate key
           ansible.builtin.shell:
-            cmd: "kubeadm init phase upload-certs --upload-certs --config /home/{{ cluster_config.ssh.ssh_user }}/kubeadm-config.yaml"
+            cmd: "kubeadm init phase upload-certs --upload-certs --config /root/kubeadm-config.yaml"
           register: upload_certs_output
           become: true
           delegate_to: "{{ control_plane_host }}"
@@ -55,7 +55,7 @@
 
         - name: Remove kubeadm-config.yaml
           ansible.builtin.file:
-            path: "/home/{{ cluster_config.ssh.ssh_user }}/kubeadm-config.yaml"
+            path: "/root/kubeadm-config.yaml"
             state: absent
           become: true
 

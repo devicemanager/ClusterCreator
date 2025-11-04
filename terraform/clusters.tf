@@ -124,6 +124,7 @@ variable "clusters" {
         ssh_user               = "root"
       }
       networking = {
+        bridge                 = "betanet"
         ipv4 = {
           subnet_prefix        = "10.0.2"
           gateway              = "10.0.2.1"
@@ -142,7 +143,7 @@ variable "clusters" {
           cores      = 4
           memory     = 4096
           disks      = [
-            { datastore = "local-btrfs", size = 20 }
+            { datastore = "local-zfs", size = 20 }
           ]
           start_ip   = 110
           labels = [
@@ -154,7 +155,7 @@ variable "clusters" {
           cores      = 8
           memory     = 4096
           disks      = [
-            { datastore = "local-btrfs", size = 20 }
+            { datastore = "local-zfs", size = 20 }
           ]
           start_ip   = 130
           labels = [
@@ -172,6 +173,7 @@ variable "clusters" {
         ssh_user               = "root"
       }
       networking = {
+        bridge                 = "gammanet"
         ipv4 = {
           subnet_prefix        = "10.0.3"
           gateway              = "10.0.3.1"
@@ -190,7 +192,7 @@ variable "clusters" {
           cores     = 4
           memory    = 4096
           disks     = [
-            { datastore = "local-btrfs", size = 20 }
+            { datastore = "local-zfs", size = 20 }
           ]
           start_ip = 110
           labels   = [
@@ -200,7 +202,7 @@ variable "clusters" {
         etcd = {
           count     = 3
           disks     = [
-            { datastore = "local-btrfs", size = 20 }
+            { datastore = "local-zfs", size = 20 }
           ]
           start_ip = 120
         }
@@ -209,7 +211,7 @@ variable "clusters" {
           cores     = 8
           memory    = 4096
           disks     = [
-            { datastore = "local-btrfs", size = 20 }
+            { datastore = "local-zfs", size = 20 }
           ]
           start_ip = 130
           labels   = [
@@ -221,7 +223,7 @@ variable "clusters" {
           pve_nodes  = [ "Acropolis", "Parthenon" ]
           cpu_type   = "host"
           disks      = [
-            { datastore = "local-btrfs", size = 20 }
+            { datastore = "local-zfs", size = 20 }
           ]
           start_ip   = 190
           labels = [

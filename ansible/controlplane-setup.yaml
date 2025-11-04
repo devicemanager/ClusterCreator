@@ -172,3 +172,25 @@
         state: touch
       tags:
         - kubeadm_init
+
+- name: Set up kubeconfig for root user on all controlplane nodes
+  hosts: controlplane
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Create .kube directory
+      ansible.builtin.file:
+        path: /root/.kube
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Copy admin.conf to .kube/config
+      ansible.builtin.copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /root/.kube/config
+        remote_src: yes
+        owner: root
+        group: root
+        mode: '0644'
