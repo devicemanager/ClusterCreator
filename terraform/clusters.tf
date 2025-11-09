@@ -188,9 +188,9 @@ variable "clusters" {
       }
       node_classes = {
         controlplane = {
-          count     = 3
-          cores     = 4
-          memory    = 4096
+          count     = 1
+          cores     = 1
+          memory    = 1024
           disks     = [
             { datastore = "local-zfs", size = 20 }
           ]
@@ -200,16 +200,16 @@ variable "clusters" {
           ]
         }
         etcd = {
-          count     = 3
+          count     = 1
           disks     = [
             { datastore = "local-zfs", size = 20 }
           ]
           start_ip = 120
         }
         general = {
-          count     = 5
-          cores     = 8
-          memory    = 4096
+          count     = 1
+          cores     = 1
+          memory    = 1024
           disks     = [
             { datastore = "local-zfs", size = 20 }
           ]
@@ -219,8 +219,8 @@ variable "clusters" {
           ]
         }
         gpu = {
-          count      = 2
-          pve_nodes  = [ "Acropolis", "Parthenon" ]
+          count      = 1
+          pve_nodes  = [ "pve-5" ]
           cpu_type   = "host"
           disks      = [
             { datastore = "local-zfs", size = 20 }
